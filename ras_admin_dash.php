@@ -1,8 +1,7 @@
 <?php
 session_start();
 
-// You can validate the admin password here. For simplicity, let's assume 'admin123' is the correct password
-if ($_POST['admin_password'] !== 'admin123') {
+if ($_POST['admin_password'] !== '1234') {
     header("Location: admin_verify.php");
     exit();
 }
