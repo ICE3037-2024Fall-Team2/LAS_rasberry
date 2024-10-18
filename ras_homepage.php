@@ -12,7 +12,7 @@
 </head>
 <body>
     <h1>Admin Control</h1>
-    <button onclick="window.location.href='unlock.php'">Unlock</button>
-    <button onclick="window.location.href='admin_verify.php'">Admin</button>
+    <button onclick="window.location.href='ras_verify_app.php'">Unlock</button>
+    <button onclick="window.location.href='ras_admin_dash.php'">Admin</button>
 </body>
 </html>
