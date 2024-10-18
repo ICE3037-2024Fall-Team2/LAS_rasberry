@@ -22,6 +22,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     <ul>
         <li><a href="ras_cancel_app.php">Cancel Appointment</a></li>
         <li><a href="ras_change_admin_list.php">Change Admin List</a></li>
+        <li><a href="logout.php">Logout</a></li>
     </ul>
 </body>
 </html>
