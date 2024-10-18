@@ -1,22 +1,30 @@
 <?php
 session_start();
-include 'db_connection.php';
+require 'db_connection.php';
 
-if (isset($_POST['submit'])) {
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    header('Location: ras_admin_login.php');
+    exit;
+}
+
+if (isset($_POST['password'])) {
+    $username = $_SESSION['username'];
     $password = $_POST['password'];
 
-    // Fetch the stored hashed password for the admin
-    $sql = "SELECT password FROM admins WHERE username = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([$_SESSION['username']]);
-    $admin = $stmt->fetch();
+    // Verify the admin's password again
+    $stmt = $conn->prepare("SELECT password FROM users WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
 
-    // Verify the provided password against the stored hash
-    if ($admin && password_verify($password, $admin['password'])) {
-        $_SESSION['is_admin'] = true;
-        header("Location: ras_admin_dash.php");
+    if ($user && password_verify($password, $user['password'])) {
+        // Proceed to the action
+        $_SESSION['pw_verified'] = true;
+        header('Location: ' . $_SESSION['redirect_after_pw']);
+        exit;
     } else {
-        $error_message = "Incorrect password!";
+        $error = "Password incorrect";
     }
 }
 ?>
@@ -25,20 +33,17 @@ if (isset($_POST['submit'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Password</title>
+    <title>Confirm Password</title>
 </head>
 <body>
-    <h2>Admin Password Verification</h2>
-    
-    <?php if (!empty($error_message)): ?>
-        <p><?php echo $error_message; ?></p>
+    <h2>Confirm Password</h2>
+    <?php if (isset($error)): ?>
+        <p style="color: red;"><?= $error ?></p>
     <?php endif; ?>
-    
-    <form method="POST">
-        <label for="password">Enter Password:</label>
-        <input type="password" name="password" required>
-        <button type="submit" name="submit">Submit</button>
+    <form method="POST" action="ras_admin_pw.php">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br>
+        <button type="submit">Confirm</button>
     </form>
 </body>
 </html>
