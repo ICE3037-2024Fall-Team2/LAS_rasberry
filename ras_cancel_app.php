@@ -1,42 +1,33 @@
 <?php
 session_start();
-include 'db_connection.php';
 
-if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
-    exit();
+// Check if the admin is logged in
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    header('Location: ras_admin_login.php');
+    exit;
 }
 
-$message = "";
+// Check if password has been verified
+if (!isset($_SESSION['pw_verified']) || $_SESSION['pw_verified'] !== true) {
+    $_SESSION['redirect_after_pw'] = 'ras_cancel_app.php';
+    header('Location: ras_admin_pw.php');
+    exit;
+}
 
-// Fetch current appointments
-$sql = "SELECT reservation_id, lab_id, user_id, date, time FROM reservations";
-$stmt = $conn->prepare($sql);
-$stmt->execute();
-$appointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Database connection
+require 'db_connection.php';
 
-// Cancel appointment logic
-if (isset($_POST['confirm_cancel'])) {
+if (isset($_POST['reservation_id'])) {
     $reservation_id = $_POST['reservation_id'];
-    $admin_password = $_POST['admin_password'];
 
-    // Verify admin password
-    $sql = "SELECT * FROM admins WHERE username = ? AND password = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([$_SESSION['username'], md5($admin_password)]); // Hashing is required here
-    $admin = $stmt->fetch();
+    // Delete the reservation
+    $stmt = $conn->prepare("DELETE FROM reservations WHERE reservation_id = ?");
+    $stmt->bind_param("s", $reservation_id);
 
-    if ($admin) {
-        // If the password is correct, proceed to cancel the appointment
-        $sql = "DELETE FROM reservations WHERE reservation_id = ?";
-        $stmt = $conn->prepare($sql);
-        if ($stmt->execute([$reservation_id])) {
-            $message = "Appointment canceled successfully.";
-        } else {
-            $message = "Error: Could not cancel the appointment.";
-        }
+    if ($stmt->execute()) {
+        echo "Reservation cancelled successfully.";
     } else {
-        $message = "Incorrect admin password.";
+        echo "Failed to cancel the reservation.";
     }
 }
 ?>
@@ -45,42 +36,14 @@ if (isset($_POST['confirm_cancel'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cancel Appointment</title>
-    <script>
-        function selectAppointment(reservationId) {
-            document.getElementById('reservation_id').value = reservationId;
-            document.getElementById('password-form').style.display = 'block';
-        }
-    </script>
+    <title>Cancel Reservation</title>
 </head>
 <body>
-<h2>Cancel Appointments</h2>
-
-<?php if (!empty($message)): ?>
-    <p><?php echo $message; ?></p>
-<?php endif; ?>
-
-<!-- Display the appointments -->
-<ul>
-    <?php foreach ($appointments as $appointment): ?>
-        <li>
-            <?php echo "Lab ID: {$appointment['lab_id']}, User ID: {$appointment['user_id']}, Date: {$appointment['date']}, Time: {$appointment['time']}"; ?>
-            <button onclick="selectAppointment(<?php echo $appointment['reservation_id']; ?>)">Cancel</button>
-        </li>
-    <?php endforeach; ?>
-</ul>
-
-<!-- Password confirmation form -->
-<div id="password-form" style="display:none;">
-    <h3>Confirm Cancellation with Admin Password:</h3>
-    <form method="POST">
-        <input type="hidden" name="reservation_id" id="reservation_id">
-        <label for="admin_password">Admin Password:</label>
-        <input type="password" name="admin_password" required>
-        <button type="submit" name="confirm_cancel">Confirm Cancel</button>
+    <h2>Cancel a Reservation</h2>
+    <form method="POST" action="ras_cancel_app.php">
+        <label for="reservation_id">Reservation ID:</label>
+        <input type="text" id="reservation_id" name="reservation_id" required><br>
+        <button type="submit">Cancel Reservation</button>
     </form>
-</div>
-
 </body>
 </html>
