@@ -1,11 +1,6 @@
 <?php
 session_start();
 
-// Check if the user is logged in
-if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
-    exit();
-}
 
 require 'db_connection.php';
 ?>
@@ -20,13 +15,32 @@ require 'db_connection.php';
     <script src="./dist/face-api.js"></script>
     
     <style>
-        video {
-            width: 100%;
-            max-width: 400px;
+               body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
         }
 
-        #btn {
-            width: 90px;
+        video, canvas {
+            width: 80%;
+            max-width: 600px;
+            display: block;
+            margin: 20px auto;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .btn-container button {
+            width: 150px;
             height: 40px;
             border-radius: 5px;
             background: #40a3ef;
@@ -34,12 +48,21 @@ require 'db_connection.php';
             cursor: pointer;
             font-size: 16px;
         }
+
+        .btn-container button:hover {
+            background-color: #338fcb;
+        }
     </style>
 </head>
 
 <body>
     <video id="video" autoplay style="display: none;"></video>
     <canvas id="canvas" width="800" height="600"></canvas>
+
+    <div class="btn-container">
+        <button id="facial-detection-btn">Facial Detection</button>
+        <button id="qrcode-recognition-btn" onclick="window.location.href='ras_verify_qrcode.php'">QR Code Recognition</button>
+    </div>
 
     <script async>
         const video = document.getElementById('video');
@@ -103,7 +126,7 @@ require 'db_connection.php';
                 } 
             })
             .catch(error => {
-                console.error('发送到 Flask 时出错:', error);
+                console.error('error:', error);
             });
         }
 

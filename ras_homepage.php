@@ -13,6 +13,6 @@
 <body>
     <h1>Admin Control</h1>
     <button onclick="window.location.href='ras_verify_face.php'">Unlock</button>
-    <button onclick="window.location.href='ras_admin_dash.php'">Admin</button>
+    <button onclick="window.location.href='ras_admin_login.php'">Admin</button>
 </body>
 </html>

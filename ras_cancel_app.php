@@ -29,7 +29,16 @@ if (isset($_POST['reservation_id'])) {
     } else {
         echo "Failed to cancel the reservation.";
     }
+    $stmt->close();
 }
+
+// Fetch all reservations
+$sql = "SELECT reservation_id, lab_id, user_id, date, time, verified 
+        FROM reservations 
+        WHERE date >= CURDATE() 
+        ORDER BY date ASC, time ASC";
+$result = $conn->query($sql);
+
 ?>
 
 <!DOCTYPE html>
@@ -45,5 +54,39 @@ if (isset($_POST['reservation_id'])) {
         <input type="text" id="reservation_id" name="reservation_id" required><br>
         <button type="submit">Cancel Reservation</button>
     </form>
+
+    <h2>Existing Reservations</h2>
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Reservation ID</th>
+                <th>Lab ID</th>
+                <th>User ID</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Verified</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            // Check if there are any reservations
+            if ($result->num_rows > 0) {
+                // Loop through and display each reservation
+                while ($row = $result->fetch_assoc()) {
+                    echo "<tr>";
+                    echo "<td>" . htmlspecialchars($row['reservation_id']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['lab_id']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['user_id']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['date']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['time']) . "</td>";
+                    echo "<td>" . ($row['verified'] ? 'Yes' : 'No') . "</td>";
+                    echo "</tr>";
+                }
+            } else {
+                echo "<tr><td colspan='6'>No upcoming reservations found</td></tr>";
+            }
+            ?>
+        </tbody>
+    </table>
 </body>
 </html>
