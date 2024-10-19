@@ -1,86 +1,49 @@
 <?php
 session_start();
-include 'db_connection.php';
 
-// Check if admin is logged in
-if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
-    exit();
+// Check if the admin is logged in
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    header('Location: ras_admin_login.php');
+    exit;
 }
 
-$message = "";
+// Check if password has been verified
+if (!isset($_SESSION['pw_verified']) || $_SESSION['pw_verified'] !== true) {
+    $_SESSION['redirect_after_pw'] = 'ras_change_admin_list.php';
+    header('Location: ras_admin_pw.php');
+    exit;
+}
 
-// Add new admin
-if (isset($_POST['add_admin'])) {
-    $new_admin = $_POST['new_admin'];
-    $password = password_hash($_POST['password'], PASSWORD_BCRYPT); // Hash password
+// Database connection
+require 'db_connection.php';
 
-    // Insert the new admin into the database
-    $sql = "INSERT INTO admins (username, password) VALUES (?, ?)";
-    $stmt = $conn->prepare($sql);
-    if ($stmt->execute([$new_admin, $password])) {
-        $message = "New admin added successfully!";
+if (isset($_POST['new_admin_username'])) {
+    $new_admin_username = $_POST['new_admin_username'];
+
+    // Update user role to admin
+    $stmt = $conn->prepare("UPDATE users SET role = 'admin' WHERE username = ?");
+    $stmt->bind_param("s", $new_admin_username);
+
+    if ($stmt->execute()) {
+        echo "Admin list updated successfully.";
     } else {
-        $message = "Error adding admin.";
+        echo "Failed to update admin list.";
     }
 }
-
-// Remove admin
-if (isset($_POST['remove_admin'])) {
-    $remove_admin = $_POST['remove_admin'];
-
-    // Delete admin from the database
-    $sql = "DELETE FROM admins WHERE username = ?";
-    $stmt = $conn->prepare($sql);
-    if ($stmt->execute([$remove_admin])) {
-        $message = "Admin removed successfully!";
-    } else {
-        $message = "Error removing admin.";
-    }
-}
-
-// Fetch current admins
-$sql = "SELECT username FROM admins";
-$stmt = $conn->prepare($sql);
-$stmt->execute();
-$admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Admins</title>
+    <title>Change Admin List</title>
 </head>
 <body>
-<h2>Manage Admins</h2>
-
-<?php if (!empty($message)): ?>
-    <p><?php echo $message; ?></p>
-<?php endif; ?>
-
-<!-- Add Admin Form -->
-<h3>Add New Admin</h3>
-<form method="POST">
-    <label for="new_admin">New Admin Username:</label>
-    <input type="text" name="new_admin" required>
-    <label for="password">Password:</label>
-    <input type="password" name="password" required>
-    <button type="submit" name="add_admin">Add Admin</button>
-</form>
-
-<!-- Remove Admin Form -->
-<h3>Remove Admin</h3>
-<form method="POST">
-    <label for="remove_admin">Select Admin to Remove:</label>
-    <select name="remove_admin" required>
-        <?php foreach ($admins as $admin): ?>
-            <option value="<?php echo $admin['username']; ?>"><?php echo $admin['username']; ?></option>
-        <?php endforeach; ?>
-    </select>
-    <button type="submit" name="remove_admin">Remove Admin</button>
-</form>
-
+    <h2>Change Admin List</h2>
+    <form method="POST" action="ras_change_admin_list.php">
+        <label for="new_admin_username">New Admin Username:</label>
+        <input type="text" id="new_admin_username" name="new_admin_username" required><br>
+        <button type="submit">Update Admin</button>
+    </form>
 </body>
 </html>
